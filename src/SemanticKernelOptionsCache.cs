@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Soenneker.SemanticKernel.Cache.Options.Abstract;
 using Soenneker.SemanticKernel.Dtos.Options;
 using Soenneker.Utils.SingletonDictionary;
@@ -12,24 +11,17 @@ namespace Soenneker.SemanticKernel.Cache.Options;
 ///<inheritdoc cref="ISemanticKernelOptionsCache"/>
 public sealed class SemanticKernelOptionsCache : ISemanticKernelOptionsCache
 {
-    private readonly SingletonDictionary<SemanticKernelOptions> _options;
+    private readonly SingletonDictionary<SemanticKernelOptions, Func<ValueTask<SemanticKernelOptions>>> _options;
 
     public SemanticKernelOptionsCache()
     {
-        _options = new SingletonDictionary<SemanticKernelOptions>(CreateFromFactory);
+        _options = new SingletonDictionary<SemanticKernelOptions, Func<ValueTask<SemanticKernelOptions>>>((key, token, factory) => factory());
     }
 
-    private static ValueTask<SemanticKernelOptions> CreateFromFactory(string key, CancellationToken token, object[] args)
+    public ValueTask<SemanticKernelOptions> Get(string key, Func<ValueTask<SemanticKernelOptions>> optionsFactory,
+        CancellationToken cancellationToken = default)
     {
-        if (args.Length != 1 || args[0] is not Func<ValueTask<SemanticKernelOptions>> factory)
-            throw new ArgumentException("Expected args: Func<ValueTask<SemanticKernelOptions>>");
-
-        return factory();
-    }
-
-    public ValueTask<SemanticKernelOptions> Get(string key, Func<ValueTask<SemanticKernelOptions>> optionsFactory, CancellationToken cancellationToken = default)
-    {
-        return _options.Get(key, cancellationToken, optionsFactory);
+        return _options.Get(key, optionsFactory, cancellationToken);
     }
 
     public ValueTask Remove(string key)
