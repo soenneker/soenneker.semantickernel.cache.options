@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Soenneker.SemanticKernel.Cache.Options.Abstract;
 using Soenneker.SemanticKernel.Dtos.Options;
-using Soenneker.Utils.SingletonDictionary;
+using Soenneker.Dictionaries.Singletons;
 
 namespace Soenneker.SemanticKernel.Cache.Options;
 
@@ -15,7 +15,7 @@ public sealed class SemanticKernelOptionsCache : ISemanticKernelOptionsCache
 
     public SemanticKernelOptionsCache()
     {
-        _options = new SingletonDictionary<SemanticKernelOptions, Func<ValueTask<SemanticKernelOptions>>>((key, token, factory) => factory());
+        _options = new SingletonDictionary<SemanticKernelOptions, Func<ValueTask<SemanticKernelOptions>>>((key, factory, token) => factory());
     }
 
     public ValueTask<SemanticKernelOptions> Get(string key, Func<ValueTask<SemanticKernelOptions>> optionsFactory,
