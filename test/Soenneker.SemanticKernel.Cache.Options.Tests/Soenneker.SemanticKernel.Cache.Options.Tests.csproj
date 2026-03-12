@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\src\Soenneker.SemanticKernel.Cache.Options.csproj" />
+        <ProjectReference Include="..\..\src\Soenneker.SemanticKernel.Cache.Options\Soenneker.SemanticKernel.Cache.Options.csproj" />
     </ItemGroup>
 
     <ItemGroup>
