@@ -25,7 +25,7 @@ public interface ISemanticKernelOptionsCache : IAsyncDisposable
     /// </summary>
     /// <param name="key">The unique key of the entry to remove.</param>
     /// <returns>A task representing the asynchronous remove operation.</returns>
-    ValueTask Remove(string key);
+    ValueTask<bool> Remove(string key);
 
     /// <summary>
     /// Retrieves all cached <see cref="SemanticKernelOptions"/> entries, keyed by their cache keys.

@@ -24,7 +24,7 @@ public sealed class SemanticKernelOptionsCache : ISemanticKernelOptionsCache
         return _options.Get(key, optionsFactory, cancellationToken);
     }
 
-    public ValueTask Remove(string key)
+    public ValueTask<bool> Remove(string key)
     {
         return _options.Remove(key);
     }
