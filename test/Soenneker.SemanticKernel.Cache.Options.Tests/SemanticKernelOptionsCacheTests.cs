@@ -1,20 +1,19 @@
-﻿using Soenneker.SemanticKernel.Cache.Options.Abstract;
-using Soenneker.Tests.FixturedUnit;
-using Xunit;
+using Soenneker.SemanticKernel.Cache.Options.Abstract;
+using Soenneker.Tests.HostedUnit;
 
 namespace Soenneker.SemanticKernel.Cache.Options.Tests;
 
-[Collection("Collection")]
-public class SemanticKernelOptionsCacheTests : FixturedUnitTest
+[ClassDataSource<Host>(Shared = SharedType.PerTestSession)]
+public class SemanticKernelOptionsCacheTests : HostedUnitTest
 {
     private readonly ISemanticKernelOptionsCache _util;
 
-    public SemanticKernelOptionsCacheTests(Fixture fixture, ITestOutputHelper output) : base(fixture, output)
+    public SemanticKernelOptionsCacheTests(Host host) : base(host)
     {
         _util = Resolve<ISemanticKernelOptionsCache>(true);
     }
 
-    [Fact]
+    [Test]
     public void Default()
     {
 
