@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace Soenneker.SemanticKernel.Cache.Options.Abstract;
 
 /// <summary>
-/// A cache for <see cref="SemanticKernelOptions"/> using a SingletonDictionary with support for keyed asynchronous creation.
+/// Provides concurrent, keyed creation and reuse of <see cref="SemanticKernelOptions"/> instances.
 /// </summary>
 public interface ISemanticKernelOptionsCache : IAsyncDisposable
 {
@@ -31,7 +31,7 @@ public interface ISemanticKernelOptionsCache : IAsyncDisposable
     /// Retrieves all cached <see cref="SemanticKernelOptions"/> entries, keyed by their cache keys.
     /// </summary>
     /// <param name="cancellationToken">Optional cancellation token.</param>
-    /// <returns>A dictionary of all keys and their corresponding <see cref="SemanticKernelOptions"/> values.</returns>
+    /// <returns>A dictionary snapshot containing each key and its cached <see cref="SemanticKernelOptions"/> reference.</returns>
     ValueTask<Dictionary<string, SemanticKernelOptions>> GetAll(CancellationToken cancellationToken = default);
 
     /// <summary>

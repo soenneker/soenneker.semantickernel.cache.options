@@ -5,44 +5,57 @@
 
 # Soenneker.SemanticKernel.Cache.Options
 
-A cache for `SemanticKernelOptions` using a SingletonDictionary with support for keyed asynchronous creation.
+A concurrent, keyed cache for lazily created `SemanticKernelOptions` instances.
 
-## Install
+## Installation
 
 ```bash
 dotnet add package Soenneker.SemanticKernel.Cache.Options
 ```
 
-## Quick start
+## Registration
 
 ```csharp
 using Soenneker.SemanticKernel.Cache.Options.Registrars;
-using Microsoft.Extensions.DependencyInjection;
 
-var services = new ServiceCollection();
-var result = services.AddSemanticKernelOptionsCacheAsSingleton();
+services.AddSemanticKernelOptionsCacheAsSingleton();
 ```
 
-Adds `ISemanticKernelOptionsCache` as a singleton service.
+Singleton registration shares option objects across consumers. `AddSemanticKernelOptionsCacheAsScoped()` creates an independent cache for each DI scope.
 
-## What you get
+## Usage
 
-- `ISemanticKernelOptionsCache` — A cache for `SemanticKernelOptions` using a SingletonDictionary with support for keyed asynchronous creation.
-- `SemanticKernelOptionsCacheRegistrar` — Providing async thread-safe singleton Semantic Kernel Options instances.
+```csharp
+using Soenneker.SemanticKernel.Cache.Options.Abstract;
+using Soenneker.SemanticKernel.Dtos.Options;
 
-## API at a glance
+SemanticKernelOptions options = await optionsCache.Get(
+    "primary-chat",
+    () => ValueTask.FromResult(new SemanticKernelOptions
+    {
+        ModelId = configuration["Models:Primary:ModelId"],
+        Endpoint = configuration["Models:Primary:Endpoint"],
+        ApiKey = configuration["Models:Primary:ApiKey"],
+        RequestsPerMinute = 60,
+        MaxTokens = 2_000
+    }),
+    cancellationToken);
+```
 
-| API | What it does | Result / important behavior |
-| --- | --- | --- |
-| `ISemanticKernelOptionsCache.Get(key, optionsFactory, cancellationToken)` | Gets an existing `SemanticKernelOptions` from the cache, or creates and caches one using the provided factory. | The cached or newly created `SemanticKernelOptions`. |
-| `ISemanticKernelOptionsCache.Remove(key)` | Removes an entry from the cache. | A task representing the asynchronous remove operation. |
-| `ISemanticKernelOptionsCache.GetAll(cancellationToken)` | Retrieves all cached `SemanticKernelOptions` entries, keyed by their cache keys. | A dictionary of all keys and their corresponding `SemanticKernelOptions` values. |
-| `ISemanticKernelOptionsCache.Clear(cancellationToken)` | Clears all entries from the cache. | A task representing the asynchronous clear operation. |
-| `SemanticKernelOptionsCacheRegistrar.AddSemanticKernelOptionsCacheAsSingleton(services)` | Adds `ISemanticKernelOptionsCache` as a singleton service. | The same service collection, so additional registrations can be chained. |
-| `SemanticKernelOptionsCacheRegistrar.AddSemanticKernelOptionsCacheAsScoped(services)` | Adds `ISemanticKernelOptionsCache` as a scoped service. | The same service collection, so additional registrations can be chained. |
+Concurrent callers for the same key share one initialization. The first successfully created object remains associated with that key; factories passed by later calls are not invoked until the entry is removed.
 
-## Practical notes
+```csharp
+bool removed = await optionsCache.Remove("primary-chat");
+SemanticKernelOptions replacement = await optionsCache.Get(
+    "primary-chat",
+    () => LoadReplacementOptions());
+```
 
-- Cancellation stops pending work; it does not undo work that has already completed.
-- Calls that return a cached or singleton value reuse the same instance until the owning service is disposed.
-- Dispose instances you own when their scope ends so held resources can be released.
+## Important behavior
+
+- Cached options are mutable and returned by reference. Treat them as read-only after publication, or coordinate mutations because every consumer of that key sees the same object.
+- The `Get` cancellation token controls waiting for cache initialization, but the factory delegate itself does not receive that token. Capture a suitable token explicitly if the factory performs cancellable work.
+- `GetAll` returns a dictionary snapshot; the contained option objects are the same cached references.
+- `Clear` and disposal remove entries. They cannot erase immutable strings such as an API key already stored in an options object.
+
+Use different keys for different model, endpoint, credential, rate-limit, or generation configurations. Removing a cached options entry does not remove a `Kernel` already created from it in a separate kernel cache.
