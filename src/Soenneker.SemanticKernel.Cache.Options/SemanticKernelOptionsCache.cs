@@ -8,6 +8,7 @@ using Soenneker.Dictionaries.Singletons;
 
 namespace Soenneker.SemanticKernel.Cache.Options;
 
+/// <inheritdoc cref="ISemanticKernelOptionsCache" />
 public sealed class SemanticKernelOptionsCache : ISemanticKernelOptionsCache
 {
     private readonly SingletonDictionary<SemanticKernelOptions, Func<ValueTask<SemanticKernelOptions>>> _options;
